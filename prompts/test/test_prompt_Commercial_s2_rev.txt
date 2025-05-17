@@ -1,0 +1,7 @@
+You are given a movie context and a sequence of reverse-order consecutive movie scenes, each composed of 5 images stacked vertically. 
+Identify two scenes to answer the following question, which consists of two parts.
+Note: First, indicate which scene contains the answer to Part 1, and then specify which scene contains the answer to Part 2. Your answer format should be: 'Scene 7 for Part 1 and Scene 2 for Part 2.' 
+Context: <CONTEXT>
+The question has two parts:
+Part 1: <PART1>
+Part 2: <PART2>

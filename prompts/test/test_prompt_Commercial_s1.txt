@@ -1,0 +1,4 @@
+You are given a movie context consisting of several sentences and a series of consecutive scenes from the movie. Each scene is composed of five images stitched together from top to bottom. Identify which scene contains the necessary clues to answer the following question.
+Note: Please provide the index number of the scene (e.g., 1, 2, or 3) that contains the necessary information.
+Context: <CONTEXT>
+Question: <QUESTION>

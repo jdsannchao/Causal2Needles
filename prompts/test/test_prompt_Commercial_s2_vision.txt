@@ -1,0 +1,6 @@
+You are given a movie context consisting of several sentences and a series of consecutive scenes from the movie. Each scene is composed of five images stitched together from top to bottom. 
+You will be asked a two-part question. The first part of the question is designed to help you identify the scene that contains the necessary information to answer the second part.
+Using the correct scene, accurately answer Part 2 by selecting the most precise answer from the four given options.
+Note: Please answer only the second part of the multiple-choice question.
+Context: <CONTEXT>
+Question: <QUESTION>

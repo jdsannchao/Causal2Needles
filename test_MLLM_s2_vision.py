@@ -1,0 +1,250 @@
+import os
+import time
+import io
+import random
+import statistics
+import json
+import pickle
+import base64
+from tqdm import tqdm
+import requests
+import numpy as np
+from PIL import Image, ImageFile
+import torch
+from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
+import cv2
+import logging
+import random
+random.seed(42)
+import re
+import base64
+from io import BytesIO
+
+from huggingface_hub import hf_hub_download
+from transformers import LlavaNextVideoProcessor, LlavaNextVideoForConditionalGeneration
+
+
+model_id = "llava-hf/LLaVA-NeXT-Video-7B-hf"
+model = LlavaNextVideoForConditionalGeneration.from_pretrained(
+        model_id,
+        torch_dtype=torch.float16,
+        low_cpu_mem_usage=True,
+    ).to(0)
+
+processor = LlavaNextVideoProcessor.from_pretrained(model_id)
+import argparse
+
+parser = argparse.ArgumentParser(description="A command-line example with early argument access.")
+parser.add_argument('model_id', type=str, help='gemini-pro-1.5/claude-sonnet/gpt4o....')
+parser.add_argument('dataset', type=str, help='yms/symon')
+parser.add_argument('video_path', type=str, help='videos/')
+parser.add_argument('prompt_path', type=str, help='prompts/')
+parser.add_argument('questions_path', type=str, help='questions/')
+parser.add_argument('expansion', type=int, default=5, help='extra padding scenes')
+parser.add_argument('output_dir', type=str, help='experiments/')
+
+parser.add_argument('--DEBUG', type=int, default=0, help='test on 2 movies')
+
+args = parser.parse_args()
+
+
+
+def extract_abcd(input_string):
+    """
+    """
+    matches = re.findall(r'\b[A-D]\b|\([A-D]\)|[A-D]\.', input_string)
+    cleaned_matches = [re.sub(r'[\(\)\.]', '', match) for match in matches]
+
+    if cleaned_matches:
+        return cleaned_matches[0]
+    else:
+        return None
+
+def contains_single_digit(string, digit):
+    pattern = fr'\b{digit}\b'
+    return bool(re.search(pattern, string))
+
+
+def create_folder_if_not_exists(folder_path):
+
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+    else:
+        print(f"folder '{folder_path}' exist .")
+
+def get_logger(root_dir):
+    logger = logging.getLogger(__name__)
+    logger.setLevel(level=logging.INFO)  
+    handler = logging.FileHandler(root_dir + "log.txt")
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
+def encode_image(image):
+    ndarray_rgb = image[:, :, ::-1]
+    image = Image.fromarray(ndarray_rgb)
+    return image
+
+
+def get_image_from_text(text_id, anns, video_cap, new_size=1024):
+    begin_time = anns[text_id]['begin_time'] + 0.5
+    end_time = anns[text_id]['end_time'] - 0.5
+    middle_time = begin_time + (end_time - begin_time) / 2
+    mid_left = begin_time + (middle_time - begin_time) / 2
+    mid_right = middle_time + (end_time - middle_time) / 2
+    fps = video_cap.get(cv2.CAP_PROP_FPS)
+
+    frames = []
+    times = [begin_time, mid_left, middle_time, mid_right, end_time]
+    for t in times:
+        frame_number = int(t * fps)
+        video_cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+        ret, frame = video_cap.read()
+        if ret:
+            frame = cv2.resize(frame, (int(new_size/2), int(new_size/5)), interpolation=cv2.INTER_AREA)
+            frames.append(frame)
+        else:
+            print(f'cannot read time {t} frame ')
+            return None
+
+    concatenated_image = cv2.vconcat(frames)
+    return concatenated_image
+
+
+def generate_answer(images, context, question, prompt):
+
+    text_content = prompt + f"\n\nContext: {context}"
+    text_content += f"\n\nQuestion: {question}"
+    text_content += f"\n\nIndex number of the scene:\n"
+
+    # define a chat history and use `apply_chat_template` to get correctly formatted prompt
+    # Each value in "content" has to be a list of dicts with types ("text", "image", "video")
+    conversation = [
+        {
+
+            "role": "user",
+            "content": [
+                {"type": "text", "text": text_content},
+                {"type": "video"},
+            ],
+        },
+    ]
+
+    prompt = processor.apply_chat_template(conversation, add_generation_prompt=True)
+    inputs_video = processor(text=prompt, videos=images, padding=True, return_tensors="pt").to(model.device)
+
+    output = model.generate(**inputs_video, max_new_tokens=100, do_sample=False)
+    answer = processor.decode(output[0][2:], skip_special_tokens=True)
+    answer = answer.split("Index number of the scene:\n")[1]
+
+    return answer
+
+
+
+
+
+def main(args):
+
+
+    logger = get_logger(args.output_dir)
+    logger.info(f"Arguments: {vars(args)}")
+
+
+    anns_all = json.load(open('./dataset/annotations.json', 'r'))
+    if args.dataset =='symon':
+        args.dataset = 'en'
+    dataset_anns = anns_all[args.dataset]
+    movies = dataset_anns.keys()
+
+    with open(args.prompt_path, "r", encoding="utf-8") as prompt_file:
+        prompt = prompt_file.read()
+    
+    logger.info(f"Prompt:\n{prompt}")
+
+    counter_all = 0  # number of all questions
+    counter_correct= 0
+
+
+    if args.DEBUG:
+        if args.dataset=='yms':
+            movies=['0002', '0013']
+        elif args.dataset=='en':
+            movies=['__yID2Chs7s','_fHuuL01ikc']
+
+
+    for movie_id in tqdm(movies):
+
+        if os.path.exists(args.output_dir + f'{movie_id}_answer.json'):
+            continue
+
+        anns = dataset_anns[movie_id]['annotations']
+        max_idx = len(anns)-1
+
+        video_path = args.video_path + movie_id + '.mp4'
+        video_cap = cv2.VideoCapture(video_path)
+        if video_cap is None:
+            print('read video fails')
+        logger.info(f"movie_id: {movie_id}")
+
+
+        with open(args.questions_path + f'{movie_id}.json', 'r', encoding='utf-8') as file:
+            questions = json.load(file)            
+
+        for question, values in questions.items():
+            cause_idx = values[0][0]
+            effect_idx = values[0][1]
+            full_texts = dataset_anns[movie_id]['texts']
+            full_texts[cause_idx] = values[1][0]   
+            full_texts[effect_idx] = values[1][1]  
+
+            v_question = values[2][0] 
+            correct_answer = values[2][1] 
+
+            context = ' '.join(s.strip() for s in full_texts)
+
+            left_expansion = min(random.randint(0, args.expansion), cause_idx)
+            right_end = min (effect_idx + args.expansion - left_expansion, max_idx)
+
+            if 'blind' in args.prompt_path:
+                images=None
+            else:
+                images = [encode_image(get_image_from_text(idx, anns, video_cap)) for idx in
+                        range(cause_idx-left_expansion, right_end + 1)]
+
+            answer = generate_answer(images, context, question, prompt)
+
+
+            logger.info(f"Question: {v_question}")
+            logger.info(f"Correct Answer: {correct_answer}")
+            logger.info(f"LLM_Answer: {answer}")
+            counter_all += 1
+
+
+            if answer:
+                answer = answer.rstrip("\n")
+
+                result = extract_abcd(answer)
+
+                if result==correct_answer:
+                    counter_correct += 1
+                    logger.info(f"Correct!\n")
+                    correct_or_not = 'correct'
+                else:
+                    logger.info(f"Wrong!\n")
+                    correct_or_not = 'wrong'
+                    
+
+                questions[question]=[cause_idx, effect_idx, cause_idx-left_expansion, right_end, correct_or_not]
+
+        with open(args.output_dir + f'{movie_id}_answer.json', 'w', encoding='utf-8') as save_json_file:
+            json.dump(questions, save_json_file, indent=4)
+
+    logger.info(f"num_all: {counter_all}   num_correct_effect: {counter_correct}   precision: {counter_correct/counter_all}")
+
+
+if __name__ == "__main__":
+    create_folder_if_not_exists(args.output_dir)
+    main(args)
