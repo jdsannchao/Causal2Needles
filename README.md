@@ -62,12 +62,9 @@ Causal2Needles/
   │     ├── annotations.json       # File containing scene annotations
   │     └── questions/             # Folder containing generated questions
   ├── run.sh                       # Main script to start evaluation
-  ├── test_Commercial_s1.py        # Script for evaluating 1-Needle questions on proprietary models
-  ├── test_Commercial_s2.py        # Script for evaluating Visual Grounding 2-Needle questions
-  ├── test_Commercial_vision.py    # Script for evaluating Image Description 2-Needle questions
-  ├── test_MLLM_s1.py              # Script for evaluating 1-Needle questions on open-source models
-  ├── test_MLLM_s2.py              # Script for evaluating Visual Grounding 2-Needle questions
-  ├── test_MLLM_vision.py          # Script for evaluating Image Description 2-Needle questions
+  ├── test_VLM_1needle.py          # Script for evaluating 1-Needle questions
+  ├── test_VLM_2needle_ID.py       # Script for evaluating Image Description questions   
+  ├── test_VLM_2needle_VG.py       # Script for evaluating Visual Grounding questions
   └── requirements.txt             # Required dependencies for local model execution
 ```
 
