@@ -15,17 +15,15 @@ from transformers import AutoProcessor
 from transformers import Qwen2_5_VLForConditionalGeneration
 from qwen_vl_utils import process_vision_info
 
-import google.generativeai as genai
+# import google.generativeai as genai
 from google.api_core import exceptions
-
 from google import genai
-from google.api_core import exceptions
-
+from google.genai import types
 
 parser = argparse.ArgumentParser()
 parser.add_argument('model_id', type=str)
 parser.add_argument('api_key', type=str)
-parser.add_argument('dataset', type=str)
+parser.add_argument('task', type=str)
 parser.add_argument('video_path', type=str)
 parser.add_argument('prompt_path', type=str)
 parser.add_argument('questions_path', type=str)
@@ -93,14 +91,15 @@ def get_image_from_text(text_id, anns, video_cap, new_size=490):
 def generate_answer_qwen(processor, model, images, context, questions, prompt):
     contents = []
     for i, img in enumerate(images):
-        contents += [{"type": "text", "text": f"Scene {i+1}: "}, {"type": "image", "image": Image.fromarray(img)}]
+        contents += [{"type": "text", "text": f"Scene {i+1}: "}, {"type": "image", "image": img}]
     prompt_text = prompt.replace('<CONTEXT>', context).replace('<PART1>', questions[0]).replace('<PART2>', questions[1]) + "\n\nAnswer:\n"
     messages = [{"role": "user", "content": contents + [{"type": "text", "text": prompt_text}]}]
     with torch.no_grad():
         text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         imgs, vids = process_vision_info(messages)
         inputs = processor(text=[text], images=imgs, videos=vids, padding=True, return_tensors="pt")
-        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+        for k, v in inputs.items():
+            v.to(model.device) 
         with torch.inference_mode(), torch.cuda.amp.autocast(dtype=torch.bfloat16):
             outputs = model.generate(**inputs, max_new_tokens=100, do_sample=False)
         trimmed = [o[len(i):] for i, o in zip(inputs.input_ids, outputs)]
@@ -109,20 +108,16 @@ def generate_answer_qwen(processor, model, images, context, questions, prompt):
 def generate_answer_gemini(images, context, questions, prompt, client, args):
     prompt_text = prompt.replace('<CONTEXT>', context).replace('<PART1>', questions[0]).replace('<PART2>', questions[1]) + "\n\nIndex number of the scene:\n"
     contents = [prompt_text] + images if images else prompt_text
-    model = genai.GenerativeModel(model_name=args.model_id)
     retry = 0
     while retry < 5:
         try:
-            resp = client.models.generate_content( model=args.model_id, contents=full_content,  
-            config=genai.types.GenerateContentConfig(candidate_count=1,temperature=0,max_output_tokens=100,))
+            resp = client.models.generate_content( model=args.model_id, contents=contents,  
+            config=types.GenerateContentConfig(candidate_count=1,temperature=0,max_output_tokens=100,))
             return resp.text
 
-        except exceptions.ResourceExhausted:
+        except Exception as e:
+            print(f"Error generating answer: {e}")
             retry += 1
-            time.sleep(10)
-        except ValueError:
-            retry += 1
-            args.model_id = "gemini-2.0-flash"
             time.sleep(10)
     return None
 
@@ -136,20 +131,20 @@ def main(args):
     if 'gemini' in args.model_id:
         client = genai.Client(api_key=args.api_key)
 
-    elif args.model_id == 'qwen':
+    elif args.model_id == 'qwen2.5vl-7b-instruct':
         processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-7B-Instruct", cache_dir="../HuggingFace/", trust_remote_code=True)
         model = Qwen2_5_VLForConditionalGeneration.from_pretrained("Qwen/Qwen2.5-VL-7B-Instruct", cache_dir="../HuggingFace/", torch_dtype="auto", device_map="auto")
         model.eval()
 
-    anns_all = json.load(open("annotations.json", 'r'))
+    anns_all = json.load(open("./datasets/annotations.json", 'r'))
 
     with open(args.prompt_path, 'r', encoding='utf-8') as f:
         prompt = f.read()
 
     for dataset_name in ['yms', 'symon']:
         logger.info(f"Testing dataset: {dataset_name}")
-        dataset_name = "en" if args.dataset == "symon" else args.dataset
-        dataset_anns = anns_all[dataset_name]
+        dataset_key = 'en' if dataset_name == "symon" else dataset_name
+        dataset_anns = anns_all[dataset_key]
         movies = list(dataset_anns.keys())
 
         if args.DEBUG:
@@ -166,13 +161,14 @@ def main(args):
 
             anns = dataset_anns[movie_id]['annotations']
             max_idx = len(anns) - 1
-            video_cap = cv2.VideoCapture(os.path.join(args.video_path, f"{movie_id}.mp4"))
+            video_cap = cv2.VideoCapture(os.path.join(args.video_path, f"{dataset_name}/{movie_id}.mp4"))
             if not video_cap:
                 print(f"Video not found for {movie_id}, check the path.")
                 continue
 
             full_texts = dataset_anns[movie_id]['texts']
-            with open(os.path.join(args.questions_path, f"{movie_id}.json"), 'r', encoding='utf-8') as f:
+            task_name = str(args.task).split('_')[0]
+            with open(os.path.join(args.questions_path, f"{dataset_name}/{task_name}/{movie_id}.json"), 'r', encoding='utf-8') as f:
                 questions = json.load(f)
 
             for question, nested_list in questions.items():
@@ -194,9 +190,9 @@ def main(args):
                 gt_answer_cause, gt_answer_effect = left_expansion+1,  effect_idx-cause_idx+left_expansion+1
 
                 if 'gemini' in args.model_id:
-                    images = [encode_image(get_image_from_text(i, anns, video_cap, 1024)) for i in range(cause_idx-left_pad, right_end+1)]
+                    images = [encode_image(get_image_from_text(i, anns, video_cap, 1024)) for i in range(cause_idx-left_expansion, right_end+1)]
                 else:
-                    images = [encode_image(get_image_from_text(i, anns, video_cap, 490)) for i in range(cause_idx-left_pad, right_end+1)]
+                    images = [encode_image(get_image_from_text(i, anns, video_cap, 490)) for i in range(cause_idx-left_expansion, right_end+1)]
                 
                 if 'rev' in prompt:
                     images = images[::-1]
@@ -204,7 +200,7 @@ def main(args):
                     gt_answer_cause, gt_answer_effect = total_length - gt_answer_cause + 1, total_length - gt_answer_effect + 1
                 
                 logger.info(
-                    f"{movie_id} | Cause: ({cause_idx}) {full_texts[cause_idx]} | Effect: ({effect_idx}) {full_texts[effect_idx]}"
+                    f"{movie_id} | Cause: ({cause_idx}) {full_texts[cause_idx]} | Effect: ({effect_idx}) {full_texts[effect_idx]}")
 
 
                 if 'gemini' in args.model_id:
