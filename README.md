@@ -1,21 +1,63 @@
 # Causal2Needles
 
 ## Overview
-**Causal2Needles** is a benchmark dataset and evaluation toolkit designed to assess the capabilities of both proprietary and open-source multimodal large language models in long-video understanding.
 
-This repository provides:  
-- Instructions for downloading and setting up the dataset  
-- Example scripts for evaluating both commercial and open-source models (e.g., Gemini-Pro-002, LLaVA-Next-7B) 
-- Automated evaluation of model performance across three types of questions 
+**Causal2Needles** is a benchmark dataset and evaluation toolkit designed to assess the capabilities of both proprietary and open-source multimodal large language models in long-video understanding. Our dataset features a large number of "2-needle" questions, where the model must locate and reason over two distinct pieces of information from the video. An illustrative example is shown below:
+
+![Figure 1: adfadf](./assets/Figure1.pdf)
+
+More background and design details can be found in our Arxiv paper: \[URL (TODO)]
+
+This repository provides:
+
+* Repository and environment setup instructions
+* Instructions for downloading and organizing the dataset
+* Example scripts for evaluating both commercial and open-source models
+
+  > Note: All essential files and procedures for evaluation are included in this repo. However, due to model-specific chat templates and dependencies, the fully automated evaluation pipeline currently only supports **Gemini API** and **Qwen2.5-VL**. A submission platform is under development. If you would like us to test your model, please contact the authors.
+* Automated evaluation of model performance across three types of questions
+
+## Environment Setup
+
+1. Clone the repository and navigate into the folder:
+
+```bash
+git clone https://github.com/your-org/Causal2Needles.git
+cd Causal2Needles
+```
+
+2. Create a Python 3.10 virtual environment using conda (required for Gemini API compatibility):
+
+```bash
+conda create -n causal2needles python=3.10 -y
+conda activate causal2needles
+```
+
+3. Install dependencies:
+
+* **Option 1:** Use `requirements.txt`:
+
+```bash
+pip install -r requirements.txt
+```
+
+* **Option 2:** Manually ensure PyTorch version >= 2.1.2 is installed (required for Qwen2.5-VL compatibility).
 
 ## Dataset Setup
 
-1. Download the **Causal2Needles** dataset from [Hugging Face](https://huggingface.co/datasets/causal2needles/Causal2Needles).
-2. After downloading, place the dataset folder under the `dataset/` directory. The structure should look like:
+1. Download the **Causal2Needles** dataset from [https://huggingface.co/datasets/causal2needles/Causal2Needles](https://huggingface.co/datasets/causal2needles/Causal2Needles)
+
+   You can do this by running:
+
+   ```bash
+   python download_hf.py
+   ```
+
+2. After downloading, the folder structure should look like:
 
 ```
 Causal2Needles/
-  ├── dataset/
+  ├── datasets/
   │     ├── videos/                # Folder containing video files
   │     ├── annotations.json       # File containing scene annotations
   │     └── questions/             # Folder containing generated questions
@@ -23,39 +65,27 @@ Causal2Needles/
   ├── test_Commercial_s1.py        # Script for evaluating 1-Needle questions on proprietary models
   ├── test_Commercial_s2.py        # Script for evaluating Visual Grounding 2-Needle questions
   ├── test_Commercial_vision.py    # Script for evaluating Image Description 2-Needle questions
-  ├── test_MLLM_s1.py              # Script for evaluating 1-Needle questions on open-sourced models
+  ├── test_MLLM_s1.py              # Script for evaluating 1-Needle questions on open-source models
   ├── test_MLLM_s2.py              # Script for evaluating Visual Grounding 2-Needle questions
   ├── test_MLLM_vision.py          # Script for evaluating Image Description 2-Needle questions
-  ├── requirements.txt             # Required dependencies for local model execution
+  └── requirements.txt             # Required dependencies for local model execution
 ```
 
 ## How to Run
 
-1. **Install Dependencies**
-
-To ensure compatibility, install all required packages:
-
-```bash
-pip install -r requirements.txt
-````
-
-2. **Run Evaluation**
-
 We provide example scripts for evaluating two models:
 
-* For **Gemini-Pro-002** (requires API key):
+* For **Gemini-series models**, such as Gemini-pro-1.5-002 (requires API key):
 
 ```bash
-bash run.sh gemini-pro-1.5-002 your_api_key
+bash run.sh gemini_model_id your_api_key
 ```
 
-* For **LLaVA-Next-7B** (runs locally, no API key required):
+* For **Qwen2.5-VL-7B** (runs locally, no API key required):
 
 ```bash
-bash run.sh llava-next-7b none
+bash run.sh qwen2.5-vl-7b-instruct none
 ```
-
-> Make sure your environment supports running LLaVA-Next-7B locally. Refer to `requirements.txt` for necessary dependencies.
 
 The script will automatically run the selected model on all three evaluation tasks.
 
@@ -67,7 +97,8 @@ After execution, you will obtain the model's accuracy on the following three typ
 * **Visual Grounding 2-Needle Questions**
 * **Image Description 2-Needle Questions**
 
+Evaluation results can be found in the corresponding subfolders inside the `Experiments/` directory.
+
 ## License
 
 This project is released for academic research purposes only. For commercial usage, please contact the authors.
-

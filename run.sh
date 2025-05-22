@@ -2,81 +2,46 @@
 
 # Usage:
 # bash run.sh gemini-pro-1.5-002 your_api_key
-# bash run.sh llava none
+# bash run.sh qwen2.5vl-7b-instruct none
 
 model_id=$1
 api_key=$2
-dataset="yms"
-video_path="./dataset/videos/${dataset}/"
+
+video_path="datasets/videos/"
+question_path="datasets/questions/"
 expansion=5
 DEBUG=0
 
 echo "Running evaluation for model: $model_id"
-echo "Dataset: $dataset"
 
-# Shared question paths
-s2_questions_path="questions/${dataset}/s2/"
-s1_questions_path="questions/${dataset}/s1/"
+two_needle_questions_path="${question_path}/2needle/"
+one_needle_questions_path="${question_path}/1needle/"
 
-# --- GEMINI Mode ---
-if [[ $model_id == gemini* ]]; then
-    echo "Using Gemini API Key..."
+declare -a tasks=("2needle_vision" "2needle_normal" "2needle_rev" "1needle")
+declare -A prompts=(
+  ["2needle_vision"]="prompts/test/test_prompt_2needle_vision.txt"
+  ["2needle_normal"]="prompts/test/test_prompt_2needle_normal.txt"
+  ["2needle_rev"]="prompts/test/test_prompt_2needle_rev.txt"
+  ["1needle"]="prompts/test/test_prompt_1needle.txt"
+)
+declare -A scripts=(
+  ["2needle_vision"]="test_VLM_2needle_vision.py"
+  ["2needle_normal"]="test_VLM_2needle.py"
+  ["2needle_rev"]="test_VLM_2needle.py"
+  ["1needle"]="test_VLM_1needle.py"
+)
 
-    ## For 2-needle image description task
-    task="s2_vision"
-    prompt_path="prompts/test/test_prompt_Commercial_s2_vision.txt"
-    output_dir="experiments/${dataset}/${model_id}/${task}/"
-    python test_Commercial_s2_vision.py "$model_id" "$api_key" "$dataset" "$video_path" "$prompt_path" "$s2_questions_path" "$expansion" "$output_dir" --DEBUG "$DEBUG"
+for task in "${tasks[@]}"; do
+    prompt_path="${prompts[$task]}"
+    script="${scripts[$task]}"
+    output_dir="experiments/${model_id}/${task}/"
 
-    ## For 2-needle visual grounding task (forward)
-    task="s2_normal"
-    prompt_path="prompts/test/test_prompt_Commercial_s2_normal.txt"
-    output_dir="experiments/${dataset}/${model_id}/${task}/"
-    python test_Commercial_s2.py "$model_id" "$api_key" "$dataset" "$video_path" "$prompt_path" "$s2_questions_path" "$expansion" "$output_dir" --DEBUG "$DEBUG"
+    if [[ $task == "1needle" ]]; then
+        qpath="$one_needle_questions_path"
+    else
+        qpath="$two_needle_questions_path"
+    fi
 
-    ## For 2-needle visual grounding task (reverse)
-    task="s2_rev"
-    prompt_path="prompts/test/test_prompt_Commercial_s2_rev.txt"
-    output_dir="experiments/${dataset}/${model_id}/${task}/"
-    python test_Commercial_s2.py "$model_id" "$api_key" "$dataset" "$video_path" "$prompt_path" "$s2_questions_path" "$expansion" "$output_dir" --DEBUG "$DEBUG"
-
-    ## For 1-needle visual grounding task
-    task="s1"
-    prompt_path="prompts/test/test_prompt_Commercial_s1.txt"
-    output_dir="experiments/${dataset}/${model_id}/${task}/"
-    python test_Commercial_s2.py "$model_id" "$api_key" "$dataset" "$video_path" "$prompt_path" "$s1_questions_path" "$expansion" "$output_dir" --DEBUG "$DEBUG"
-
-# --- LLAVA Mode ---
-elif [[ $model_id == llava* ]]; then
-    echo "Using local LLaVA model..."
-
-    ## For 2-needle image description task
-    task="s2_vision"
-    prompt_path="prompts/test/test_prompt_Commercial_s2_vision.txt"
-    output_dir="experiments/${dataset}/${model_id}/${task}/"
-    python test_MLLM_s2_vision.py "$model_id" "none" "$dataset" "$video_path" "$prompt_path" "$s2_questions_path" "$expansion" "$output_dir" --DEBUG "$DEBUG"
-
-    ## For 2-needle visual grounding task (forward)
-    task="s2_normal"
-    prompt_path="prompts/test/test_prompt_Commercial_s2_normal.txt"
-    output_dir="experiments/${dataset}/${model_id}/${task}/"
-    python test_MLLM_s2.py "$model_id" "none" "$dataset" "$video_path" "$prompt_path" "$s2_questions_path" "$expansion" "$output_dir" --DEBUG "$DEBUG"
-
-    ## For 2-needle visual grounding task (reverse)
-    task="s2_rev"
-    prompt_path="prompts/test/test_prompt_Commercial_s2_rev.txt"
-    output_dir="experiments/${dataset}/${model_id}/${task}/"
-    python test_MLLM_s2.py "$model_id" "none" "$dataset" "$video_path" "$prompt_path" "$s2_questions_path" "$expansion" "$output_dir" --DEBUG "$DEBUG"
-
-    ## For 1-needle visual grounding task
-    task="s1"
-    prompt_path="prompts/test/test_prompt_Commercial_s1.txt"
-    output_dir="experiments/${dataset}/${model_id}/${task}/"
-    python test_MLLM_s2.py "$model_id" "none" "$dataset" "$video_path" "$prompt_path" "$s1_questions_path" "$expansion" "$output_dir" --DEBUG "$DEBUG"
-
-else
-    echo "Unsupported model_id: $model_id"
-    echo "Please use 'gemini-pro-1.5-002' or 'llava-next-7b'."
-    exit 1
-fi
-
+    echo "Launching: $task"
+    python $script "$model_id" "$api_key" "$video_path" "$prompt_path" "$qpath" "$expansion" "$output_dir" --DEBUG "$DEBUG"
+done
