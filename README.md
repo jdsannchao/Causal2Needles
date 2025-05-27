@@ -6,7 +6,7 @@
 
 ![Figure 1: The evaluation framework of CAUSAL2NEEDLES.](./assets/Figure1.png)
 
-More background and design details can be found in our Arxiv paper: \[URL (TODO)]
+More background and design details can be found in our Arxiv paper: [Two Causally Related Needles in a Video Haystack](https://arxiv.org/abs/2505.19853)
 
 This repository provides:
 
