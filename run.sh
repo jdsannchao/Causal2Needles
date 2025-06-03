@@ -1,19 +1,29 @@
 #!/bin/bash
 
 # Usage:
-# bash run.sh gemini-1.5-pro your_api_key
-# bash run.sh qwen2.5vl-7b-instruct none
+# bash run.sh <model_id> <api_key> [debug]
+# Example:
+#   bash run.sh gemini-1.5-pro your_api_key       # runs without debug
+#   bash run.sh gemini-1.5-pro your_api_key debug # runs with debug mode
+#   bash run.sh qwen2.5vl-7b-instruct none
 
 model_id=$1
 api_key=$2
+debug_flag=$3
+
+# Set DEBUG=1 only if third argument is 'debug'
+if [ "$debug_flag" == "debug" ]; then
+    DEBUG=1
+else
+    DEBUG=0
+fi
 
 video_path="datasets/videos/"
 question_path="datasets/questions/"
 expansion=5
-DEBUG=1
 
 echo "Running evaluation for model: $model_id"
-
+echo "DEBUG mode: $DEBUG"
 
 declare -a tasks=("2needle_vision" "2needle_normal" "2needle_rev" "1needle")
 declare -A prompts=(
