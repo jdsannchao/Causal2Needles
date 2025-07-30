@@ -204,47 +204,47 @@ def main(args):
 
 
                 if 'gemini' in args.model_id:
-                    answer = generate_answer_gemini(images, context, question, prompt, client, args)
+                    answer = generate_answer_gemini(images, context, s2_question, prompt, client, args)
                 elif 'qwen' in args.model_id:
-                    answer = generate_answer_qwen(processor, model, images, context, question, prompt)
-
-            counter_all += 1
-            logger.info(
-                    f"Question: {question}\nGT: {gt_answer_cause}, {gt_answer_effect}\nAnswer: {answer}")
-
-            if answer:
-                answer = answer.rstrip("\n")
-
-                result = extract_scene_numbers(answer)
-
-                if result[0]==gt_answer_effect:
-                    counter_correct_effect += 1
-                    logger.info(f"Correct Effect!\n")
-                    correct_or_not_effect = 'correct'
-                else:
-                    logger.info(f"Wrong Effect!\n")
-                    correct_or_not_effect = 'wrong'
+                    answer = generate_answer_qwen(processor, model, images, context, s2_question, prompt)
+    
+                counter_all += 1
+                logger.info(
+                        f"Question: {question}\nGT: {gt_answer_cause}, {gt_answer_effect}\nAnswer: {answer}")
+    
+                if answer:
+                    answer = answer.rstrip("\n")
+    
+                    result = extract_scene_numbers(answer)
+    
+                    if result[0]==gt_answer_effect:
+                        counter_correct_effect += 1
+                        logger.info(f"Correct Effect!\n")
+                        correct_or_not_effect = 'correct'
+                    else:
+                        logger.info(f"Wrong Effect!\n")
+                        correct_or_not_effect = 'wrong'
+                        
+                    if result[1]==gt_answer_cause:
+                        counter_correct_cause += 1
+                        logger.info(f"Correct Cause!\n")
+                        correct_or_not_cause = 'correct'
+                    else:
+                        logger.info(f"Wrong Cause!\n")
+                        correct_or_not_cause = 'wrong'
                     
-                if result[1]==gt_answer_cause:
-                    counter_correct_cause += 1
-                    logger.info(f"Correct Cause!\n")
-                    correct_or_not_cause = 'correct'
-                else:
-                    logger.info(f"Wrong Cause!\n")
-                    correct_or_not_cause = 'wrong'
-                
-                if correct_or_not_effect == correct_or_not_cause == 'correct':
-                    counter_correct_both +=1
-
-
-                questions[question]=[cause_idx, effect_idx, cause_idx-left_expansion, right_end, correct_or_not_effect, correct_or_not_cause]
-
-        with open(args.output_dir + f'{movie_id}_answer.json', 'w', encoding='utf-8') as save_json_file:
-            json.dump(questions, save_json_file, indent=4)
-
-    logger.info(f"num_all: {counter_all}   num_correct_effect: {counter_correct_effect}   precision: {counter_correct_effect/counter_all}")
-    logger.info(f"num_all: {counter_all}   num_correct_cause: {counter_correct_cause}   precision: {counter_correct_cause/counter_all}")
-    logger.info(f"num_all: {counter_all}   num_correct_both: {counter_correct_both}   precision: {counter_correct_both/counter_all}")
+                    if correct_or_not_effect == correct_or_not_cause == 'correct':
+                        counter_correct_both +=1
+    
+    
+                    questions[question]=[cause_idx, effect_idx, cause_idx-left_expansion, right_end, correct_or_not_effect, correct_or_not_cause]
+    
+            with open(args.output_dir + f'{movie_id}_answer.json', 'w', encoding='utf-8') as save_json_file:
+                json.dump(questions, save_json_file, indent=4)
+    
+        logger.info(f"num_all: {counter_all}   num_correct_effect: {counter_correct_effect}   precision: {counter_correct_effect/counter_all}")
+        logger.info(f"num_all: {counter_all}   num_correct_cause: {counter_correct_cause}   precision: {counter_correct_cause/counter_all}")
+        logger.info(f"num_all: {counter_all}   num_correct_both: {counter_correct_both}   precision: {counter_correct_both/counter_all}")
 
 
 if __name__ == "__main__":
