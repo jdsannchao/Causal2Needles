@@ -1,0 +1,17 @@
+You have a pair of sentences: one indicating a cause and the other describing its effect. Your goal is to rephrase both sentences so that the causal relationship between them is explicitly clear. Please ensure that after rephrasing,  there is a piece of shared information present in both sentences that establishes the causal relationship between them.
+
+Example Input:
+Cause: The remaining robber reveals himself to be the Joker, a crazed supervilian, and escapes the bank in a school bus. 
+Effect: Several mob leaders hold a conference, which is interrupted by the joker.
+Example Output:
+Cause: After the final robber reveals himself to be the Joker—an unstable supervillain—and escapes the bank by blending into a line of school buses, the criminal underworld is thrown into disorder.
+Effect: To restore order, several prominent mob leaders convene a clandestine meeting, only to have the Joker himself crash their conference.
+
+Example Input:
+Cause: Gordon, who was actually sent to save Rachel, is unable to make it there in time and Rachel dies.
+Effect: The joker is able to locate Dent in a hospital and manipulates him into seeking revenge for Rachel's death.
+Example Output:
+Cause: Gordon, tasked with rescuing Rachel, arrives too late, and she is dead.
+Effect: Dent, blaming Rachel's death on Gordon, becomes vulnerable to the Joker's manipulation in a hospital and ultimately decides to seek revenge.
+
+Input:

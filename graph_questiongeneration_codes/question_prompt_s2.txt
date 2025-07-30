@@ -1,0 +1,39 @@
+You have a pair of sentences: one indicating a cause and the other describing its effect. Your goal is to create a sentence containing two questions. Please complete this goal step by step, as shown in the examples. (Please follow the output format shown in the example.)
+
+Example Input:
+Cause: Feeling responsible, Harry Hart, known as Galahad, gives a medal for valor to Lee's widow, Michelle, and his young son, Eggsy, instructing them to call the number on the medal if they ever need help.
+Effect: When Eggsy is arrested for stealing a car, he calls the number on the medal for help.
+
+Example Output:
+Step 1:
+Instruction: Identify a piece of shared information that appears in both 'Cause' and 'Effect' sentences and establishes their causal relationship.
+Output: The shared information is 'call the number on the medal'.
+Step 2:
+Instruction: Create a question that uses the 'Effect' sentence as context and shared information as the answer. First, the shared information needs to be rephrased into a less specific statement according to the context, and then this rephrased statement should be used in the question.
+Output: First, according to the context, 'call the number on the medal' can be rephrased into 'an approach'. Then, the question is 'What approach did Eggsy take to seek help when he was arrested for stealing a car?'
+Step 3:
+Instruction: Based on the previous question, create one more question about the shared information. The answer to this question should be the information from the 'Cause' sentence other than the shared information, and the answer should not appear in the 'Effect' sentence. The rephrased statement in the last step should be used in this question.
+Output: The question is 'Why was he able to adopt such an approach?'
+Step 4:
+Instruction: Combine the two questions into one sentence.
+Output: What approach did Eggsy take to seek help when he was arrested for stealing a car, and why was he able to adopt such an approach?
+
+Example Input:
+Cause: Wayne confesses to Alfred Pennyworth his plan to steal kryptonite to prepare for a potential confrontation with Superman.
+Effect: Acting on his plan, Batman infiltrates LexCorp to steal the kryptonite, intending to use it against Superman by crafting a powered exoskeleton, a kryptonite grenade launcher, and a kryptonite-tipped spear.
+
+Example Output:
+Step 1:
+Instruction: Identify a piece of shared information that appears in both 'Cause' and 'Effect' sentences and establishes their causal relationship.
+Output: The shared information is 'steal kryptonite'.
+Step 2:
+Instruction: Create a question that uses the 'Effect' sentence as context and shared information as the answer. First, the shared information needs to be rephrased into a less specific statement according to the context, and then this rephrased statement should be used in the question.
+Output: First, according to the context, 'steal kryptonite' can be rephrased into 'a plan'. Then, the question is 'What plan did Wayne carry out when he infiltrated LexCorp?'
+Step 3:
+Instruction: Based on the previous question, create one more question about the shared information. The answer to this question should be the information from the 'Cause' sentence other than the shared information, and the answer should not appear in the 'Effect' sentence. The rephrased statement in the last step should be used in this question.
+Output: The question is 'To whom did Wayne confess such a plan?'
+Step 4:
+Instruction: Combine the two questions into one sentence.
+Output: What plan did Wayne carry out when he infiltrated LexCorp, and to whom did he confess such a plan?
+
+Input:
