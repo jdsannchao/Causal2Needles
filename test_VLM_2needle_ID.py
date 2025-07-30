@@ -204,7 +204,7 @@ def main(args):
                 json.dump(questions, save_json_file, indent=4)
 
 
-    logger.info(f"num_all: {counter_all}   num_correct_effect: {counter_correct}   precision: {counter_correct/counter_all}")
+        logger.info(f"num_all: {counter_all}   num_correct_effect: {counter_correct}   precision: {counter_correct/counter_all}")
 if __name__ == "__main__":
     create_folder_if_not_exists(args.output_dir)
     main(args)
