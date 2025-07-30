@@ -184,7 +184,7 @@ def main(args):
             with open(out_path, 'w', encoding='utf-8') as f:
                 json.dump(questions, f, indent=4)
 
-    logger.info(f"Total: {total}  Correct: {correct}  Accuracy: {correct/total:.3f}")
+        logger.info(f"Total: {total}  Correct: {correct}  Accuracy: {correct/total:.3f}")
 
 if __name__ == "__main__":
     main(args)
