@@ -122,6 +122,7 @@ def main(args):
     with open(args.prompt_path, 'r', encoding='utf-8') as f:
         prompt = f.read()
 
+    total = correct = 0
     for dataset_name in ['yms', 'symon']:
         logger.info(f"Testing dataset: {dataset_name}")
         dataset_key = 'en' if dataset_name == "symon" else dataset_name
@@ -132,7 +133,7 @@ def main(args):
             logger.info("Debug mode")
             movies = ['0002', '0013'] if dataset_name == 'yms' else ['__yID2Chs7s', '_fHuuL01ikc']
 
-        total = correct = 0
+        
         for movie_id in tqdm(movies):
             out_path = os.path.join(args.output_dir, f"{movie_id}_answer.json")
             if os.path.exists(out_path):
