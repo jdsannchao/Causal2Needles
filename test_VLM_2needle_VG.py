@@ -140,7 +140,9 @@ def main(args):
 
     with open(args.prompt_path, 'r', encoding='utf-8') as f:
         prompt = f.read()
-
+        
+    counter_all = 0  # number of all questions
+    counter_correct_cause,  counter_correct_effect, counter_correct_both= 0, 0, 0  # number of questions with correct answer
     for dataset_name in ['yms', 'symon']:
         logger.info(f"Testing dataset: {dataset_name}")
         dataset_key = 'en' if dataset_name == "symon" else dataset_name
@@ -151,8 +153,6 @@ def main(args):
             logger.info("Debug mode")
             movies = ['0002', '0013'] if dataset_name == 'yms' else ['__yID2Chs7s', '_fHuuL01ikc']
 
-        counter_all = 0  # number of all questions
-        counter_correct_cause,  counter_correct_effect, counter_correct_both= 0, 0, 0  # number of questions with correct answer
 
         for movie_id in tqdm(movies):
             out_path = os.path.join(args.output_dir, f"{movie_id}_answer.json")
@@ -201,7 +201,6 @@ def main(args):
                 
                 logger.info(
                     f"{movie_id} | Cause: ({cause_idx}) {full_texts[cause_idx]} | Effect: ({effect_idx}) {full_texts[effect_idx]}")
-
 
                 if 'gemini' in args.model_id:
                     answer = generate_answer_gemini(images, context, s2_question, prompt, client, args)
