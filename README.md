@@ -14,8 +14,8 @@ This repository provides:
 * Instructions for downloading and organizing the dataset
 * Example scripts for evaluating both commercial and open-source models
 
-  > Note: All essential files and procedures for evaluation are included in this repo. However, due to model-specific chat templates and dependencies, the fully automated evaluation pipeline currently only supports **Gemini API** and **Qwen2.5-VL**. A submission platform is under development. If you would like us to test your model, please contact the authors.
-* Automated evaluation of model performance across three types of questions
+  > Note: All essential files and procedures for evaluation are included in this repo. However, due to model-specific chat templates and dependencies, the fully automated evaluation pipeline currently only supports **Gemini API** and **Qwen2.5-VL**. 
+* Automated evaluation of model performance across four types of questions
 
 ## Environment Setup
 
@@ -62,9 +62,10 @@ Causal2Needles/
   │     ├── annotations.json       # File containing scene annotations
   │     └── questions/             # Folder containing generated questions
   ├── run.sh                       # Main script to start evaluation
-  ├── test_VLM_1needle.py          # Script for evaluating 1-Needle questions
-  ├── test_VLM_2needle_ID.py       # Script for evaluating Image Description questions   
-  ├── test_VLM_2needle_VG.py       # Script for evaluating Visual Grounding questions
+  ├── test_VLM_1needle.py          # Script for evaluating Causal 1-Needle questions
+  ├── test_VLM_1needle_NC.py       # Script for evaluating Noncausal 1-Needle questions
+  ├── test_VLM_2needle_ID.py       # Script for evaluating Image Description 2-Needle questions   
+  ├── test_VLM_2needle_VG.py       # Script for evaluating Visual Grounding 2-Needle questions
   └── requirements.txt             # Required dependencies for local model execution
 ```
 
@@ -90,7 +91,8 @@ The script will automatically run the selected model on all three evaluation tas
 
 After execution, you will obtain the model's accuracy on the following three types of questions:
 
-* **1-Needle Questions**
+* **Causal 1-Needle Questions**
+* **Noncausal 1-Needle Questions**
 * **Visual Grounding 2-Needle Questions**
 * **Image Description 2-Needle Questions**
 
