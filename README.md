@@ -1,4 +1,4 @@
-# Causal2Needles
+# Causal2Needles (NeurIPS D&B Track 2025)
 
 ## Overview
 
