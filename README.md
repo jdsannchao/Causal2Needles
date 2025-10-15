@@ -85,7 +85,7 @@ bash run.sh gemini_model_id your_api_key
 bash run.sh qwen2.5-vl-7b-instruct none
 ```
 
-The script will automatically run the selected model on all three evaluation tasks.
+The script will automatically run the selected model on all four evaluation tasks.
 
 ## Output
 
