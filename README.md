@@ -89,7 +89,7 @@ The script will automatically run the selected model on all four evaluation task
 
 ## Output
 
-After execution, you will obtain the model's accuracy on the following three types of questions:
+After execution, you will obtain the model's accuracy on the following four types of questions:
 
 * **Causal 1-Needle Questions**
 * **Noncausal 1-Needle Questions**
