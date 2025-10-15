@@ -147,7 +147,7 @@ def main(args):
                 continue
 
             full_texts = dataset_anns[movie_id]['texts']
-            task_name = str(args.task).split('_')[0]
+            task_name = str(args.task)
             with open(os.path.join(args.questions_path, f"{dataset_name}/{task_name}/{movie_id}.json"), 'r', encoding='utf-8') as f:
                 questions = json.load(f)
 
