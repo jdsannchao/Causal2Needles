@@ -2,6 +2,8 @@
 
 ## Overview
 
+[Project Page](https://limiaoyu.github.io/Causal2Needles/)
+
 **Causal2Needles** is a benchmark dataset and evaluation toolkit designed to assess the capabilities of both proprietary and open-source multimodal large language models in long-video understanding. Our dataset features a large number of "2-needle" questions, where the model must locate and reason over two distinct pieces of information from the video. An illustrative example is shown below:
 
 ![Figure 1: The evaluation framework of CAUSAL2NEEDLES.](./assets/Figure1.jpg)
